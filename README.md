@@ -10,7 +10,7 @@ A multilingual AI chatbot that understands Bangla, English, and Banglish — pow
 - Daily-limit handling with direct Telegram support link
 
 ## Live Link 
-[Add your GitHub Pages link here]
+ https://madian-isa.github.io/MINDSET-AI/
 
 ## Setup
 1. Deploy the Supabase Edge Function (`gemini-chat`) with your `GEMINI_API_KEY` set as a secret.
