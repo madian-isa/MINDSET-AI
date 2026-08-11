@@ -102,7 +102,7 @@
                 </div>
                 <p id="signup-error" class="field-error"></p>
                 <button onclick="doSignup()" id="signup-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-indigo-600/20 mt-2">Create Account</button>
-                <p class="text-[11px] text-slate-500 text-center mt-2">We'll send a verification link to your email.</p>
+                <p class="text-[11px] text-slate-500 text-center mt-2">You'll be logged in right away — Please remember your password....</p>
             </div>
 
             <!-- FORGOT PANEL -->
@@ -313,10 +313,31 @@
             try {
                 var result = await supabaseClient.auth.signUp({ email: email, password: password });
                 if (result.error) throw result.error;
-                toast('Verification email sent! Please check your inbox.');
-                switchAuthTab('login');
+
+                // Supabase quirk: signing up with an email that already exists returns
+                // a user object with an EMPTY identities array (no error thrown).
+                var user = result.data.user;
+                if (user && user.identities && user.identities.length === 0) {
+                    showFieldError('signup-error', 'This email is already registered. Please log in instead.');
+                    return;
+                }
+
+                if (result.data.session) {
+                    // Email confirmation is off — user is logged in immediately.
+                    currentSession = result.data.session;
+                    toast('Account created!');
+                    showApp();
+                } else {
+                    // Email confirmation is still on — fall back to the old flow.
+                    toast('Verification email sent! Please check your inbox.');
+                    switchAuthTab('login');
+                }
             } catch (e) {
-                showFieldError('signup-error', e.message || 'Signup failed.');
+                var msg = e.message || 'Signup failed.';
+                if (msg.toLowerCase().indexOf('already registered') !== -1 || msg.toLowerCase().indexOf('already exists') !== -1) {
+                    msg = 'This email is already registered. Please log in instead.';
+                }
+                showFieldError('signup-error', msg);
             } finally {
                 btn.disabled = false; btn.textContent = 'Create Account';
             }
