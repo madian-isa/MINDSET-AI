@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MINDSET AI</title>
-    <meta name="google-site-verification" content="ASk_Qqcm9MQOR5Gj_APfdVMaR3hLfsUXHWWBl1oJPDA" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='50%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%23ec4899'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='24' height='24' rx='6' fill='url(%23g)'/%3E%3Cpath fill='%23fff' d='M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z'/%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -33,6 +33,12 @@
         textarea { field-sizing: content; min-height: 24px; max-height: 120px; }
         .telegram-btn { background: linear-gradient(135deg, #0088cc, #229ED9); }
         .telegram-btn:hover { background: linear-gradient(135deg, #0077b3, #1a8bc7); }
+        .auth-tab { color: #64748b; border-bottom: 2px solid transparent; }
+        .auth-tab.active { color: #fff; border-bottom-color: #6366f1; }
+        .auth-panel { display: none; }
+        .auth-panel.active { display: block; }
+        .field-error { color: #f87171; font-size: 12px; margin-top: 4px; display: none; }
+        .field-error.show { display: block; }
     </style>
 </head>
 <body class="h-screen flex flex-col text-slate-200 overflow-hidden">
@@ -50,6 +56,82 @@
         <button onclick="hideLoader()" class="mt-8 text-xs text-slate-600 hover:text-slate-400 underline">Tap here if stuck</button>
     </div>
 
+    <!-- AUTH SCREEN -->
+    <div id="authScreen" class="hidden fixed inset-0 z-30 bg-[#0b0f19] flex-col items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-sm mx-auto py-10">
+            <div class="flex flex-col items-center mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl mb-3">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-white">MINDSET AI</h1>
+                <p class="text-xs text-slate-500 mt-1">Sign in to start chatting</p>
+            </div>
+
+            <!-- Tabs -->
+            <div id="authTabs" class="flex border-b border-slate-800 mb-6">
+                <button onclick="switchAuthTab('login')" data-tab="login" class="auth-tab active flex-1 py-2.5 text-sm font-semibold transition">Login</button>
+                <button onclick="switchAuthTab('signup')" data-tab="signup" class="auth-tab flex-1 py-2.5 text-sm font-semibold transition">Sign Up</button>
+                <button onclick="switchAuthTab('forgot')" data-tab="forgot" class="auth-tab flex-1 py-2.5 text-sm font-semibold transition">Forgot</button>
+            </div>
+
+            <!-- LOGIN PANEL -->
+            <div id="panel-login" class="auth-panel active space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+                    <input id="login-email" type="email" placeholder="you@example.com" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition placeholder-slate-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Password</label>
+                    <input id="login-password" type="password" placeholder="••••••••" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition placeholder-slate-600" onkeydown="if(event.key==='Enter')doLogin()">
+                </div>
+                <p id="login-error" class="field-error"></p>
+                <button onclick="doLogin()" id="login-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-indigo-600/20 mt-2">Login</button>
+            </div>
+
+            <!-- SIGNUP PANEL -->
+            <div id="panel-signup" class="auth-panel space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+                    <input id="signup-email" type="email" placeholder="you@example.com" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition placeholder-slate-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Password</label>
+                    <input id="signup-password" type="password" placeholder="At least 6 characters" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition placeholder-slate-600" onkeydown="if(event.key==='Enter')doSignup()">
+                </div>
+                <p id="signup-error" class="field-error"></p>
+                <button onclick="doSignup()" id="signup-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-indigo-600/20 mt-2">Create Account</button>
+                <p class="text-[11px] text-slate-500 text-center mt-2">We'll send a verification link to your email.</p>
+            </div>
+
+            <!-- FORGOT PANEL -->
+            <div id="panel-forgot" class="auth-panel space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+                    <input id="forgot-email" type="email" placeholder="you@example.com" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition placeholder-slate-600" onkeydown="if(event.key==='Enter')doForgot()">
+                </div>
+                <p id="forgot-error" class="field-error"></p>
+                <button onclick="doForgot()" id="forgot-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-indigo-600/20 mt-2">Send Reset Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESET PASSWORD SCREEN (shown after clicking the email recovery link) -->
+    <div id="resetScreen" class="hidden fixed inset-0 z-40 bg-[#0b0f19] flex-col items-center justify-center p-4">
+        <div class="w-full max-w-sm mx-auto">
+            <h1 class="text-lg font-bold text-white mb-1 text-center">Set a new password</h1>
+            <p class="text-xs text-slate-500 mb-6 text-center">Choose a new password for your account</p>
+            <div class="space-y-3">
+                <input id="reset-password" type="password" placeholder="New password" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition placeholder-slate-600">
+                <p id="reset-error" class="field-error"></p>
+                <button onclick="doResetPassword()" id="reset-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-indigo-600/20">Update Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP SCREEN (chat) -->
+    <div id="appScreen" class="hidden w-full h-full flex flex-col">
     <!-- Header -->
     <header class="bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-800/60 px-4 py-3 flex items-center justify-between shrink-0 z-20">
         <div class="flex items-center gap-3">
@@ -72,6 +154,9 @@
             </button>
             <button onclick="clearChat()" class="p-2.5 hover:bg-slate-800/80 rounded-xl transition text-slate-400 hover:text-white" title="Clear Chat">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+            <button onclick="doLogout()" class="p-2.5 hover:bg-slate-800/80 rounded-xl transition text-slate-400 hover:text-white" title="Logout">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
             </button>
         </div>
     </header>
@@ -120,7 +205,7 @@
             <div class="bg-slate-800/80 border border-slate-700/40 rounded-2xl rounded-tl-sm px-4 py-3.5 max-w-[85%] sm:max-w-[75%]">
                 <p class="text-sm leading-relaxed text-slate-200">Hello! I am <strong class="text-white">MINDSET AI</strong>. I was created by <strong class="text-indigo-400">ISA</strong> to help you with anything you need. Feel free to ask me anything!</p>
                 <div class="flex items-center gap-2 mt-3">
-                    <span class="text-[10px] bg-slate-700/50 text-slate-400 px-2 py-0.5 rounded-full border border-slate-600/30">Type anything....</span>
+                    <span class="text-[10px] bg-slate-700/50 text-slate-400 px-2 py-0.5 rounded-full border border-slate-600/30">Type your massage....</span>
                 </div>
             </div>
         </div>
@@ -156,6 +241,7 @@
         </div>
         <p class="text-center text-[11px] text-slate-600 mt-2">MINDSET AI can make mistakes. Please verify important information.</p>
     </div>
+    </div><!-- /appScreen -->
 
     <script>
         // ===== CONFIG =====
@@ -173,6 +259,132 @@
         }
         let busy = false;
 
+        // ===== AUTH =====
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentSession = null;
+
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(function(el) {
+                el.classList.toggle('active', el.dataset.tab === tab);
+            });
+            document.querySelectorAll('.auth-panel').forEach(function(el) {
+                el.classList.toggle('active', el.id === 'panel-' + tab);
+            });
+        }
+
+        function showFieldError(id, msg) {
+            var el = document.getElementById(id);
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+        function clearFieldError(id) {
+            var el = document.getElementById(id);
+            el.textContent = '';
+            el.classList.remove('show');
+        }
+
+        async function doLogin() {
+            clearFieldError('login-error');
+            var email = document.getElementById('login-email').value.trim();
+            var password = document.getElementById('login-password').value;
+            if (!email || !password) { showFieldError('login-error', 'Please enter email and password.'); return; }
+            var btn = document.getElementById('login-btn');
+            btn.disabled = true; btn.textContent = 'Logging in...';
+            try {
+                var result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+                if (result.error) throw result.error;
+                currentSession = result.data.session;
+                showApp();
+            } catch (e) {
+                showFieldError('login-error', e.message || 'Login failed.');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Login';
+            }
+        }
+
+        async function doSignup() {
+            clearFieldError('signup-error');
+            var email = document.getElementById('signup-email').value.trim();
+            var password = document.getElementById('signup-password').value;
+            if (!email || !password) { showFieldError('signup-error', 'Please enter email and password.'); return; }
+            if (password.length < 6) { showFieldError('signup-error', 'Password must be at least 6 characters.'); return; }
+            var btn = document.getElementById('signup-btn');
+            btn.disabled = true; btn.textContent = 'Creating account...';
+            try {
+                var result = await supabaseClient.auth.signUp({ email: email, password: password });
+                if (result.error) throw result.error;
+                toast('Verification email sent! Please check your inbox.');
+                switchAuthTab('login');
+            } catch (e) {
+                showFieldError('signup-error', e.message || 'Signup failed.');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Create Account';
+            }
+        }
+
+        async function doForgot() {
+            clearFieldError('forgot-error');
+            var email = document.getElementById('forgot-email').value.trim();
+            if (!email) { showFieldError('forgot-error', 'Please enter your email.'); return; }
+            var btn = document.getElementById('forgot-btn');
+            btn.disabled = true; btn.textContent = 'Sending...';
+            try {
+                var result = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+                if (result.error) throw result.error;
+                toast('Reset link sent! Check your email.');
+            } catch (e) {
+                showFieldError('forgot-error', e.message || 'Could not send reset link.');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Send Reset Link';
+            }
+        }
+
+        async function doResetPassword() {
+            clearFieldError('reset-error');
+            var password = document.getElementById('reset-password').value;
+            if (!password || password.length < 6) { showFieldError('reset-error', 'Password must be at least 6 characters.'); return; }
+            var btn = document.getElementById('reset-btn');
+            btn.disabled = true; btn.textContent = 'Updating...';
+            try {
+                var result = await supabaseClient.auth.updateUser({ password: password });
+                if (result.error) throw result.error;
+                toast('Password updated! You are now logged in.');
+                document.getElementById('resetScreen').classList.add('hidden');
+                document.getElementById('resetScreen').classList.remove('flex');
+                showApp();
+            } catch (e) {
+                showFieldError('reset-error', e.message || 'Could not update password.');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Update Password';
+            }
+        }
+
+        async function doLogout() {
+            if (!confirm('Log out?')) return;
+            await supabaseClient.auth.signOut();
+            currentSession = null;
+            showAuth();
+        }
+
+        function showApp() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('flex');
+            document.getElementById('appScreen').classList.remove('hidden');
+        }
+        function showAuth() {
+            document.getElementById('appScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('authScreen').classList.add('flex');
+        }
+
+        supabaseClient.auth.onAuthStateChange(function(event, session) {
+            currentSession = session;
+            if (event === 'PASSWORD_RECOVERY') {
+                document.getElementById('resetScreen').classList.remove('hidden');
+                document.getElementById('resetScreen').classList.add('flex');
+            }
+        });
+
         // ===== LOADER =====
         function hideLoader() {
             var el = document.getElementById('loader');
@@ -180,7 +392,7 @@
         }
 
         // ===== INIT =====
-        window.onload = function() {
+        window.onload = async function() {
             try {
                 document.getElementById('cfg-url').value = SUPABASE_URL;
                 document.getElementById('cfg-key').value = SUPABASE_KEY;
@@ -194,14 +406,26 @@
 
                 restoreHistory();
 
-                setTimeout(hideLoader, 700);
+                // Check if this load is a password-recovery link
+                var isRecovery = window.location.hash.indexOf('type=recovery') !== -1;
 
-                if (!SUPABASE_KEY) {
-                    setTimeout(openSettings, 1200);
+                var sessionResult = await supabaseClient.auth.getSession();
+                currentSession = sessionResult.data.session;
+
+                if (isRecovery) {
+                    document.getElementById('resetScreen').classList.remove('hidden');
+                    document.getElementById('resetScreen').classList.add('flex');
+                } else if (currentSession) {
+                    showApp();
+                } else {
+                    showAuth();
                 }
+
+                hideLoader();
             } catch (e) {
                 console.error('Init error:', e);
                 hideLoader();
+                showAuth();
             }
         };
 
@@ -245,6 +469,11 @@
                 openSettings();
                 return;
             }
+            if (!currentSession) {
+                toast('Please log in first');
+                showAuth();
+                return;
+            }
 
             addMsg('user', text);
             input.value = '';
@@ -255,6 +484,12 @@
             setStatus('busy');
 
             try {
+                var sessionResult = await supabaseClient.auth.getSession();
+                var accessToken = sessionResult.data.session ? sessionResult.data.session.access_token : null;
+                if (!accessToken) {
+                    throw new Error('SESSION_EXPIRED');
+                }
+
                 var apiHistory = history.slice(-10).map(function(m) {
                     return {
                         role: m.role === 'user' ? 'user' : 'model',
@@ -266,7 +501,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + accessToken,
                         'apikey': SUPABASE_KEY
                     },
                     body: JSON.stringify({ message: text, history: apiHistory })
@@ -282,6 +517,13 @@
                 if (!res.ok) {
                     var errMsg = data.error || data.message || 'Server error ' + res.status;
                     if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg);
+
+                    if (errMsg === 'USER_DAILY_LIMIT') {
+                        throw new Error('USER_DAILY_LIMIT');
+                    }
+                    if ((res.status === 401) && (errMsg.indexOf('Login required') !== -1 || errMsg.indexOf('session has expired') !== -1)) {
+                        throw new Error('SESSION_EXPIRED');
+                    }
 
                     var lowerErr = errMsg.toLowerCase();
                     if (res.status === 429 || lowerErr.indexOf('quota') !== -1 || lowerErr.indexOf('limit') !== -1 || lowerErr.indexOf('resource_exhausted') !== -1) {
@@ -322,6 +564,15 @@
 
                 if (msg === 'DAILY_LIMIT') {
                     addDailyLimitMsg();
+                } else if (msg === 'USER_DAILY_LIMIT') {
+                    addUserLimitMsg();
+                } else if (msg === 'SESSION_EXPIRED') {
+                    addErrorMsg('Your session has expired. Please log in again.');
+                    setTimeout(async function() {
+                        await supabaseClient.auth.signOut();
+                        currentSession = null;
+                        showAuth();
+                    }, 1500);
                 } else if (lowerMsg.indexOf('failed to fetch') !== -1 || lowerMsg.indexOf('networkerror') !== -1) {
                     addErrorMsg('Connection failed. Please check your internet connection and Edge Function URL.');
                 } else if (lowerMsg.indexOf('not available') !== -1 && lowerMsg.indexOf('model') !== -1) {
@@ -399,6 +650,28 @@
                 '<p class="font-semibold text-amber-300 mb-2">Daily limit reached</p>' +
                 '<p class="mb-3">You\'ve reached the free usage limit for today. This resets automatically in 24 hours — feel free to come back and continue the conversation then.</p>' +
                 '<p class="text-slate-300 mb-3">Facing an issue or need help sooner? Reach out to ISA directly.</p>' +
+                '<a href="' + TELEGRAM_LINK + '" target="_blank" rel="noopener noreferrer" class="telegram-btn inline-flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-lg shadow-blue-500/20">' +
+                '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>' +
+                'Chat with ISA' +
+                '</a>' +
+                '</div>';
+            box.appendChild(div);
+            scrollBottom();
+        }
+
+        // Per-user daily limit message (different from the shared Gemini quota message)
+        function addUserLimitMsg() {
+            var box = document.getElementById('chatBox');
+            var div = document.createElement('div');
+            div.className = 'msg-pop flex gap-3';
+            div.innerHTML =
+                '<div class="w-9 h-9 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30">' +
+                '<svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' +
+                '</div>' +
+                '<div class="bg-amber-500/10 border border-amber-500/20 text-amber-100 rounded-2xl rounded-tl-sm px-4 py-3.5 max-w-[85%] sm:max-w-[75%] text-sm leading-relaxed">' +
+                '<p class="font-semibold text-amber-300 mb-2">You\'ve reached today\'s message limit</p>' +
+                '<p class="mb-3">Your personal daily limit has been reached. It resets automatically at midnight — see you tomorrow!</p>' +
+                '<p class="text-slate-300 mb-3">Need more right now? Reach out to ISA.</p>' +
                 '<a href="' + TELEGRAM_LINK + '" target="_blank" rel="noopener noreferrer" class="telegram-btn inline-flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-lg shadow-blue-500/20">' +
                 '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>' +
                 'Chat with ISA' +
